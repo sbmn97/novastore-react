@@ -38,7 +38,7 @@ pipeline {
                     set -eu
                     echo "📦 Installing dependencies..."
                     docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
-                        npm ci
+                        npm install
                         echo '🏗️ Building React application...'
                         npm run build
                         echo '✅ Build completed successfully'
