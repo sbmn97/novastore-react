@@ -1,7 +1,16 @@
 pipeline {
     agent any
-    options { timestamps() }
-    
+    options { timestamps                sh '''
+                    set -eu
+                    echo "📁 Packaging build artifacts..."
+                    # Ensure build directory exists
+                    if [ ! -d "build" ]; then
+                        echo "❌ Build failed - no build directory found"
+                        exit 1
+                    fi
+                    echo "📋 Build contents:"
+                    ls -la build/
+                '''
     environment {
         NODE_VERSION = '18'
         SITE_DIR = 'src'
@@ -21,7 +30,7 @@ pipeline {
         stage('Validate') {
             steps {
                 sh '''
-                    set -euo pipefail
+                    set -eu
                     echo "📋 Environment Information:"
                     docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
                         node --version
@@ -35,7 +44,7 @@ pipeline {
         stage('Install & Build') {
             steps {
                 sh '''
-                    set -euo pipefail
+                    set -eu
                     echo "📦 Installing dependencies..."
                     docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
                         npm ci
@@ -67,7 +76,7 @@ pipeline {
         stage('Deploy to Nginx') {
             steps {
                 sh '''
-                    set -euo pipefail
+                    set -eu
                     echo "🚀 Deploying to Nginx web server..."
                     mkdir -p "${DEPLOY_DIR}"
                     rm -rf "${DEPLOY_DIR:?}/"*
