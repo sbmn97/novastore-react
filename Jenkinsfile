@@ -1,16 +1,7 @@
 pipeline {
     agent any
-    options { timestamps                sh '''
-                    set -eu
-                    echo "📁 Packaging build artifacts..."
-                    # Ensure build directory exists
-                    if [ ! -d "build" ]; then
-                        echo "❌ Build failed - no build directory found"
-                        exit 1
-                    fi
-                    echo "📋 Build contents:"
-                    ls -la build/
-                '''
+    options { timestamps() }
+    
     environment {
         NODE_VERSION = '18'
         SITE_DIR = 'src'
@@ -59,14 +50,14 @@ pipeline {
         stage('Package') {
             steps {
                 sh '''
-                    set -euo pipefail
+                    set -eu
                     echo "📁 Packaging build artifacts..."
                     # Ensure build directory exists
                     if [ ! -d "build" ]; then
                         echo "❌ Build failed - no build directory found"
                         exit 1
                     fi
-                    echo "� Build contents:"
+                    echo "📋 Build contents:"
                     ls -la build/
                 '''
                 archiveArtifacts artifacts: "${BUILD_DIR}/**", fingerprint: true
