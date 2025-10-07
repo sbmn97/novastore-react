@@ -20,34 +20,30 @@ pipeline {
         
         stage('Validate') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside {
-                        sh '''
-                            set -euo pipefail
-                            echo "📋 Environment Information:"
-                            node --version
-                            npm --version
-                            echo "✅ Environment validation complete"
-                        '''
-                    }
-                }
+                sh '''
+                    set -euo pipefail
+                    echo "📋 Environment Information:"
+                    docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
+                        node --version
+                        npm --version
+                        echo '✅ Environment validation complete'
+                    "
+                '''
             }
         }
         
         stage('Install & Build') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside {
-                        sh '''
-                            set -euo pipefail
-                            echo "📦 Installing dependencies..."
-                            npm ci
-                            echo "🏗️ Building React application..."
-                            npm run build
-                            echo "✅ Build completed successfully"
-                        '''
-                    }
-                }
+                sh '''
+                    set -euo pipefail
+                    echo "📦 Installing dependencies..."
+                    docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
+                        npm ci
+                        echo '🏗️ Building React application...'
+                        npm run build
+                        echo '✅ Build completed successfully'
+                    "
+                '''
             }
         }
         
