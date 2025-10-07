@@ -23,9 +23,21 @@ pipeline {
                 sh '''
                     set -eu
                     echo "📋 Environment Information:"
+                    echo "Working directory: $(pwd)"
+                    echo "Files in workspace:"
+                    ls -la
+                    echo "Checking if package.json exists:"
+                    if [ -f "package.json" ]; then
+                        echo "✅ package.json found"
+                        cat package.json | head -10
+                    else
+                        echo "❌ package.json NOT found"
+                    fi
                     docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
                         node --version
                         npm --version
+                        echo 'Files in Docker workspace:'
+                        ls -la
                         echo '✅ Environment validation complete'
                     "
                 '''
