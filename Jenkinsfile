@@ -49,12 +49,25 @@ pipeline {
                 sh '''
                     set -eu
                     echo "📦 Installing dependencies..."
-                    docker run --rm -v "$(pwd):/workspace" -w /workspace node:18-alpine sh -c "
-                        npm install
-                        echo '🏗️ Building React application...'
-                        npm run build
-                        echo '✅ Build completed successfully'
-                    "
+                    # Create a temporary container to copy files and run build
+                    CONTAINER_ID=$(docker create -w /app node:18-alpine sh -c "npm install && npm run build")
+                    
+                    # Copy source files to container
+                    docker cp package.json "$CONTAINER_ID:/app/"
+                    docker cp src "$CONTAINER_ID:/app/"
+                    docker cp public "$CONTAINER_ID:/app/"
+                    
+                    # Start container and run build
+                    docker start -a "$CONTAINER_ID"
+                    
+                    # Copy build results back
+                    docker cp "$CONTAINER_ID:/app/build" .
+                    docker cp "$CONTAINER_ID:/app/node_modules" . || true
+                    
+                    # Clean up
+                    docker rm "$CONTAINER_ID"
+                    
+                    echo '✅ Build completed successfully'
                 '''
             }
         }
