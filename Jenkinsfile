@@ -19,39 +19,35 @@ pipeline {
         }
         
         stage('Validate') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
             steps {
-                sh '''
-                    set -euo pipefail
-                    echo "📋 Environment Information:"
-                    node --version
-                    npm --version
-                    echo "✅ Environment validation complete"
-                '''
+                script {
+                    docker.image('node:18-alpine').inside {
+                        sh '''
+                            set -euo pipefail
+                            echo "📋 Environment Information:"
+                            node --version
+                            npm --version
+                            echo "✅ Environment validation complete"
+                        '''
+                    }
+                }
             }
         }
         
         stage('Install & Build') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
             steps {
-                sh '''
-                    set -euo pipefail
-                    echo "📦 Installing dependencies..."
-                    npm ci
-                    echo "🏗️ Building React application..."
-                    npm run build
-                    echo "✅ Build completed successfully"
-                '''
+                script {
+                    docker.image('node:18-alpine').inside {
+                        sh '''
+                            set -euo pipefail
+                            echo "📦 Installing dependencies..."
+                            npm ci
+                            echo "🏗️ Building React application..."
+                            npm run build
+                            echo "✅ Build completed successfully"
+                        '''
+                    }
+                }
             }
         }
         
