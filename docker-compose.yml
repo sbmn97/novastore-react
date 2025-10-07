@@ -1,0 +1,28 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - web_content:/var/www/site
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Temporarily disabled for manual setup
+    # - ./jenkins-config/init.groovy:/var/jenkins_home/init.groovy.d/init.groovy:ro
+    environment:
+      - JAVA_OPTS=-Djenkins.security.enableCSRFProtection=true
+    restart: unless-stopped
+  web:
+    image: nginx:alpine
+    container_name: web
+    ports:
+      - "8081:80"
+    volumes:
+      - web_content:/usr/share/nginx/html:ro
+    restart: unless-stopped
+volumes:
+  jenkins_home:
+  web_content:

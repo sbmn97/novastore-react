@@ -1,0 +1,22 @@
+# Development Dockerfile for NovaStore React App
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for better caching
+COPY package*.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Expose development port
+EXPOSE 3000
+
+# Set environment variables
+ENV CHOKIDAR_USEPOLLING=true
+ENV REACT_APP_API_URL=http://localhost:8080
+
+# Start development server
+CMD ["npm", "start"]

@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+    options { timestamps() }
+    
+    environment {
+        NODE_VERSION = '18'
+        SITE_DIR = 'src'
+        BUILD_DIR = 'build'
+        DEPLOY_DIR = '/var/www/site'
+        GITHUB_REPO = 'https://github.com/sbmn97/novastore-react.git'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps { 
+                checkout scm
+                echo '✅ Source code retrieved successfully'
+            }
+        }
+        
+        stage('Validate') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    set -euo pipefail
+                    echo "📋 Environment Information:"
+                    node --version
+                    npm --version
+                    echo "✅ Environment validation complete"
+                '''
+            }
+        }
+        
+        stage('Install & Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    set -euo pipefail
+                    echo "📦 Installing dependencies..."
+                    npm ci
+                    echo "🏗️ Building React application..."
+                    npm run build
+                    echo "✅ Build completed successfully"
+                '''
+            }
+        }
+        
+        stage('Package') {
+            steps {
+                sh '''
+                    set -euo pipefail
+                    echo "📁 Packaging build artifacts..."
+                    # Ensure build directory exists
+                    if [ ! -d "build" ]; then
+                        echo "❌ Build failed - no build directory found"
+                        exit 1
+                    fi
+                    echo "� Build contents:"
+                    ls -la build/
+                '''
+                archiveArtifacts artifacts: "${BUILD_DIR}/**", fingerprint: true
+            }
+        }
+        
+        stage('Deploy to Nginx') {
+            steps {
+                sh '''
+                    set -euo pipefail
+                    echo "🚀 Deploying to Nginx web server..."
+                    mkdir -p "${DEPLOY_DIR}"
+                    rm -rf "${DEPLOY_DIR:?}/"*
+                    cp -r "${BUILD_DIR}/." "${DEPLOY_DIR}/"
+                    echo "✅ Deployment completed successfully"
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '🧹 Pipeline execution completed.'
+        }
+        
+        success {
+            echo '🎉 NovaStore deployment successful!'
+            echo 'Deployed. Open http://localhost:8081'
+        }
+        
+        failure {
+            echo '❌ Pipeline failed. Check logs for details.'
+        }
+    }
+}
